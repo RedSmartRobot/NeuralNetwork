@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo 1 — How Neural Networks Learn</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/brain.js/2.0.0-beta.23/brain-browser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --border: #1e2330;
+    --accent: #c8a96e;
+    --accent2: #6e9ec8;
+    --accent3: #c86e6e;
+    --text: #e8e4da;
+    --muted: #7a7870;
+    --node-hidden: #6e9ec8;
+    --node-input: #c8a96e;
+    --node-output-low: #6ec87a;
+    --node-output-high: #c86e6e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .demo-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.2rem 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    color: var(--text);
+    font-weight: 400;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-left: auto;
+    font-style: italic;
+  }
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0;
+    height: calc(100vh - 80px);
+  }
+  @media(max-width: 900px) {
+    .main { grid-template-columns: 1fr; height: auto; }
+  }
+
+  /* LEFT: Network Visualization */
+  .viz-panel {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .viz-top {
+    padding: 1.2rem 1.5rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .epoch-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-left: auto;
+  }
+  .error-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent2);
+  }
+  #network-canvas {
+    flex: 1;
+    width: 100%;
+    display: block;
+  }
+
+  /* RIGHT: Control Panel */
+  .control-panel {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .panel-section {
+    padding: 1.2rem 1.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-section h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.9rem;
+  }
+
+  /* Training data */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .data-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: left;
+    padding: 0.3rem 0.4rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+  }
+  .data-table td {
+    padding: 0.35rem 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text);
+    border-bottom: 1px solid #1a1d25;
+  }
+  .data-table tr:hover td { background: #1a1d25; }
+  .tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+  .tag-high { background: #2a1515; color: var(--accent3); border: 1px solid #3d1e1e; }
+  .tag-low { background: #152a1c; color: var(--node-output-low); border: 1px solid #1e3d27; }
+
+  /* Controls */
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    background: transparent;
+  }
+  .btn-primary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent); color: var(--bg); }
+  .btn-primary:disabled { opacity: 0.35; cursor: default; }
+  .btn-secondary {
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .btn-secondary:hover { border-color: var(--muted); color: var(--text); }
+  .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+
+  .progress-bar-wrap {
+    background: var(--border);
+    height: 4px;
+    margin: 0.8rem 0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.1s;
+  }
+  .status-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    min-height: 1.2em;
+  }
+
+  /* Try it section */
+  .input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 0.9rem;
+  }
+  .input-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .input-label span {
+    font-family: 'DM Mono', monospace;
+    color: var(--accent2);
+    font-size: 0.72rem;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    outline: none;
+    border-radius: 2px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--accent2);
+    cursor: pointer;
+  }
+  .prediction-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    text-align: center;
+  }
+  .prediction-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+  .prediction-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    transition: color 0.3s;
+  }
+  .prediction-verdict {
+    font-size: 0.78rem;
+    margin-top: 0.3rem;
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  /* Error chart */
+  #error-canvas {
+    width: 100%;
+    height: 80px;
+    display: block;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .legend-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .explainer {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .explainer strong { color: var(--text); font-style: normal; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="demo-tag">Demo 1 / 3</span>
+  <h1>How Neural Networks Learn</h1>
+  <span class="subtitle">Contract Risk Classifier · Real Brain.js network</span>
+</header>
+
+<div class="main">
+  <!-- LEFT: Visualization -->
+  <div class="viz-panel">
+    <div class="viz-top">
+      <span class="section-label">Network Architecture · 4 → 6 → 4 → 1</span>
+      <span class="error-display" id="error-live">error: —</span>
+      <span class="epoch-display" id="epoch-live">epoch: 0</span>
+    </div>
+    <canvas id="network-canvas"></canvas>
+  </div>
+
+  <!-- RIGHT: Controls -->
+  <div class="control-panel">
+
+    <div class="panel-section">
+      <h3>Training Data — Contract Features</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Penalty?</th>
+            <th>Duration</th>
+            <th>Parties</th>
+            <th>Ambiguity</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody id="data-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel-section">
+      <h3>Training</h3>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-train" onclick="startTraining()">▶ Train Network</button>
+        <button class="btn btn-secondary" id="btn-reset" onclick="resetNetwork()">↺ Reset</button>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div class="status-text" id="status-text">Ready — press Train to begin</div>
+      <canvas id="error-canvas"></canvas>
+      <div class="legend" style="margin-top:0.5rem;">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>Training error over time</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Try It — Predict a New Contract</h3>
+      <div class="input-row">
+        <div class="input-label">Penalty clause <span id="v-penalty">0.5</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="0.5" id="s-penalty" oninput="updateSlider('penalty',this.value)">
+      </div>
+      <div class="input-row">
+        <div class="input-label">Contract duration <span id="v-duration">0.5</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="0.5" id="s-duration" oninput="updateSlider('duration',this.value)">
+      </div>
+      <div class="input-row">
+        <div class="input-label">Number of parties <span id="v-parties">0.5</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="0.5" id="s-parties" oninput="updateSlider('parties',this.value)">
+      </div>
+      <div class="input-row">
+        <div class="input-label">Ambiguous language <span id="v-ambiguity">0.5</span></div>
+        <input type="range" min="0" max="1" step="0.01" value="0.5" id="s-ambiguity" oninput="updateSlider('ambiguity',this.value)">
+      </div>
+      <div class="prediction-box">
+        <div class="prediction-label">PREDICTED RISK SCORE</div>
+        <div class="prediction-value" id="pred-value">—</div>
+        <div class="prediction-verdict" id="pred-verdict">Train the network first</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>What You're Seeing</h3>
+      <p class="explainer">
+        Each <strong>circle</strong> is a neuron. The <strong>lines</strong> are weights —
+        thicker means stronger influence, <strong style="color:var(--accent)">warm</strong> means
+        pushing risk up, <strong style="color:var(--accent2)">cool</strong> means pushing it down.
+        As training runs, the network adjusts weights to reduce prediction error.
+        This is <strong>backpropagation</strong> — the core of how all modern AI learns.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Training data ──────────────────────────────────────────────
+const trainingData = [
+  { input: [1,0.8,0.2,0.9], output: [0.95], label: 'HIGH', desc: ['Yes','Long','2','High'] },
+  { input: [1,0.9,0.1,0.8], output: [0.90], label: 'HIGH', desc: ['Yes','Very long','2','High'] },
+  { input: [0,0.3,0.5,0.7], output: [0.65], label: 'HIGH', desc: ['No','Medium','3','Medium'] },
+  { input: [1,0.7,0.6,0.5], output: [0.75], label: 'HIGH', desc: ['Yes','Long','4','Medium'] },
+  { input: [0,0.6,0.8,0.9], output: [0.80], label: 'HIGH', desc: ['No','Long','5+','High'] },
+  { input: [0,0.2,0.3,0.1], output: [0.10], label: 'LOW', desc: ['No','Short','2','Low'] },
+  { input: [0,0.1,0.2,0.2], output: [0.08], label: 'LOW', desc: ['No','Short','2','Low'] },
+  { input: [1,0.3,0.2,0.1], output: [0.25], label: 'LOW', desc: ['Yes','Short','2','Low'] },
+  { input: [0,0.4,0.3,0.2], output: [0.20], label: 'LOW', desc: ['No','Medium','3','Low'] },
+  { input: [0,0.2,0.1,0.3], output: [0.15], label: 'LOW', desc: ['No','Short','2','Low'] },
+];
+
+// ── Build data table ───────────────────────────────────────────
+const tbody = document.getElementById('data-tbody');
+trainingData.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${d.desc[0]}</td><td>${d.desc[1]}</td><td>${d.desc[2]}</td><td>${d.desc[3]}</td>
+    <td><span class="tag tag-${d.label.toLowerCase()}">${d.label}</span></td>`;
+  tbody.appendChild(tr);
+});
+
+// ── Neural network ─────────────────────────────────────────────
+let net = null;
+let weights = null;
+let errorHistory = [];
+let isTraining = false;
+let currentInputs = [0.5, 0.5, 0.5, 0.5];
+
+function buildNet() {
+  net = new brain.NeuralNetwork({
+    hiddenLayers: [6, 4],
+    activation: 'sigmoid',
+    learningRate: 0.3
+  });
+  weights = null;
+  errorHistory = [];
+}
+buildNet();
+
+// ── Canvas setup ───────────────────────────────────────────────
+const canvas = document.getElementById('network-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  drawNetwork();
+}
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 100);
+
+// ── Network drawing ────────────────────────────────────────────
+const LAYERS = [4, 6, 4, 1];
+const LAYER_LABELS = ['Input\n(contract features)', 'Hidden\nlayer 1', 'Hidden\nlayer 2', 'Output\n(risk score)'];
+
+function getNodePositions(W, H) {
+  const positions = [];
+  const xPad = W * 0.1;
+  const xStep = (W - xPad * 2) / (LAYERS.length - 1);
+  LAYERS.forEach((count, li) => {
+    const x = xPad + li * xStep;
+    const yStep = H / (count + 1);
+    const layer = [];
+    for (let i = 0; i < count; i++) {
+      layer.push({ x, y: yStep * (i + 1) });
+    }
+    positions.push(layer);
+  });
+  return positions;
+}
+
+function getWeightsFromNet() {
+  if (!net || !net.toJSON) return null;
+  try {
+    const json = net.toJSON();
+    return json.layers;
+  } catch(e) { return null; }
+}
+
+function activation(x) { return 1 / (1 + Math.exp(-x)); }
+
+function forwardPass(inputs) {
+  if (!net) return null;
+  try {
+    return net.run(inputs);
+  } catch(e) { return null; }
+}
+
+function drawNetwork() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (W < 10 || H < 10) return;
+
+  const pos = getNodePositions(W, H);
+  const R = Math.min(16, W / 18, H / 20);
+  const wData = getWeightsFromNet();
+
+  // Draw connections
+  for (let li = 0; li < LAYERS.length - 1; li++) {
+    const fromLayer = pos[li];
+    const toLayer = pos[li + 1];
+
+    for (let fi = 0; fi < fromLayer.length; fi++) {
+      for (let ti = 0; ti < toLayer.length; ti++) {
+        let w = 0;
+        if (wData && wData[li + 1] && wData[li + 1].weights) {
+          const nodeWeights = wData[li + 1].weights[`${ti}`] || wData[li + 1].weights[ti];
+          if (nodeWeights) w = nodeWeights[fi] || 0;
+        }
+        const absW = Math.abs(w);
+        const lineWidth = Math.min(absW * 2.5, 2.5);
+        const alpha = wData ? Math.min(0.12 + absW * 0.55, 0.75) : 0.08;
+        let color;
+        if (!wData) color = `rgba(80,90,110,${alpha})`;
+        else if (w > 0) color = `rgba(200,169,110,${alpha})`;
+        else color = `rgba(110,158,200,${alpha})`;
+
+        ctx.beginPath();
+        ctx.moveTo(fromLayer[fi].x, fromLayer[fi].y);
+        ctx.lineTo(toLayer[ti].x, toLayer[ti].y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Draw nodes
+  LAYERS.forEach((count, li) => {
+    pos[li].forEach((node, ni) => {
+      let fillColor, activation_val = 0.5;
+
+      if (li === 0) {
+        fillColor = '#c8a96e';
+        activation_val = currentInputs[ni] || 0.5;
+      } else if (li === LAYERS.length - 1) {
+        const pred = net ? (() => { try { return net.run(currentInputs)[0]; } catch(e) { return 0.5; } })() : 0.5;
+        activation_val = pred;
+        const r = Math.round(200 * pred + 110 * (1-pred));
+        const g = Math.round(110 * pred + 200 * (1-pred));
+        fillColor = `rgb(${r},${g},110)`;
+      } else {
+        fillColor = '#6e9ec8';
+        activation_val = 0.5;
+      }
+
+      // Glow
+      const grd = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, R * 2.5);
+      grd.addColorStop(0, fillColor + '33');
+      grd.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, R * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // Node circle
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, R, 0, Math.PI * 2);
+      ctx.fillStyle = '#13161e';
+      ctx.fill();
+      ctx.strokeStyle = fillColor;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Activation fill
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, R * activation_val * 0.85, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor + '88';
+      ctx.fill();
+    });
+  });
+
+  // Layer labels
+  pos.forEach((layer, li) => {
+    const x = layer[0].x;
+    const lines = LAYER_LABELS[li].split('\n');
+    ctx.font = `${Math.max(9, W/80)}px 'DM Mono', monospace`;
+    ctx.fillStyle = '#7a7870';
+    ctx.textAlign = 'center';
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x, H - 8 - (lines.length - 1 - i) * 13);
+    });
+  });
+}
+
+// ── Error chart ────────────────────────────────────────────────
+const ec = document.getElementById('error-canvas');
+const ectx = ec.getContext('2d');
+function drawErrorChart() {
+  ec.width = ec.offsetWidth;
+  ec.height = ec.offsetHeight;
+  const W = ec.width, H = ec.height;
+  ectx.clearRect(0, 0, W, H);
+  if (errorHistory.length < 2) return;
+  const max = Math.max(...errorHistory, 0.01);
+  ectx.beginPath();
+  errorHistory.forEach((v, i) => {
+    const x = (i / (errorHistory.length - 1)) * W;
+    const y = H - (v / max) * H * 0.9;
+    i === 0 ? ectx.moveTo(x, y) : ectx.lineTo(x, y);
+  });
+  ectx.strokeStyle = '#c8a96e';
+  ectx.lineWidth = 1.5;
+  ectx.stroke();
+
+  ectx.beginPath();
+  ectx.moveTo(0, H);
+  errorHistory.forEach((v, i) => {
+    const x = (i / (errorHistory.length - 1)) * W;
+    const y = H - (v / max) * H * 0.9;
+    ectx.lineTo(x, y);
+  });
+  ectx.lineTo(W, H);
+  ectx.closePath();
+  ectx.fillStyle = '#c8a96e18';
+  ectx.fill();
+}
+
+// ── Training ───────────────────────────────────────────────────
+const TOTAL_EPOCHS = 3000;
+const BATCH = 80;
+
+async function startTraining() {
+  if (isTraining) return;
+  isTraining = true;
+  document.getElementById('btn-train').disabled = true;
+  errorHistory = [];
+
+  const data = trainingData.map(d => ({ input: d.input, output: d.output }));
+  let epoch = 0;
+
+  function step() {
+    if (epoch >= TOTAL_EPOCHS) {
+      isTraining = false;
+      document.getElementById('btn-train').disabled = false;
+      document.getElementById('status-text').textContent = 'Training complete ✓';
+      predict();
+      return;
+    }
+    const result = net.train(data, {
+      iterations: BATCH,
+      errorThresh: 0.001,
+      log: false
+    });
+    epoch += BATCH;
+    const err = result.error;
+    errorHistory.push(err);
+
+    const pct = Math.min(epoch / TOTAL_EPOCHS * 100, 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('epoch-live').textContent = `epoch: ${epoch}`;
+    document.getElementById('error-live').textContent = `error: ${err.toFixed(4)}`;
+    document.getElementById('status-text').textContent = `Training… epoch ${epoch} / ${TOTAL_EPOCHS} — error ${err.toFixed(5)}`;
+
+    drawNetwork();
+    drawErrorChart();
+    predict();
+    requestAnimationFrame(step);
+  }
+  step();
+}
+
+function resetNetwork() {
+  if (isTraining) return;
+  buildNet();
+  errorHistory = [];
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('epoch-live').textContent = 'epoch: 0';
+  document.getElementById('error-live').textContent = 'error: —';
+  document.getElementById('status-text').textContent = 'Ready — press Train to begin';
+  document.getElementById('pred-value').textContent = '—';
+  document.getElementById('pred-verdict').textContent = 'Train the network first';
+  document.getElementById('pred-value').style.color = 'var(--text)';
+  drawNetwork();
+  drawErrorChart();
+}
+
+// ── Prediction ─────────────────────────────────────────────────
+function predict() {
+  if (!net) return;
+  try {
+    const result = net.run(currentInputs);
+    const score = result[0];
+    const pct = Math.round(score * 100);
+    document.getElementById('pred-value').textContent = pct + '%';
+    let verdict, color;
+    if (pct >= 70) { verdict = 'High risk — flag for review'; color = 'var(--accent3)'; }
+    else if (pct >= 40) { verdict = 'Moderate risk — proceed with caution'; color = 'var(--accent)'; }
+    else { verdict = 'Low risk — looks routine'; color = 'var(--node-output-low)'; }
+    document.getElementById('pred-verdict').textContent = verdict;
+    document.getElementById('pred-value').style.color = color;
+    drawNetwork();
+  } catch(e) {}
+}
+
+function updateSlider(name, value) {
+  const map = { penalty: 0, duration: 1, parties: 2, ambiguity: 3 };
+  currentInputs[map[name]] = parseFloat(value);
+  document.getElementById('v-' + name).textContent = parseFloat(value).toFixed(2);
+  predict();
+}
+
+// Initial draw
+drawNetwork();
+</script>
+</body>
+</html>

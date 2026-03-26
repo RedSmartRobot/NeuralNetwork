@@ -611,7 +611,7 @@ function drawErrorChart() {
 
 // ── Training ───────────────────────────────────────────────────
 const TOTAL_EPOCHS = 3000;
-const BATCH = 80;
+const BATCH = 10;
 
 async function startTraining() {
   if (isTraining) return;
@@ -648,7 +648,7 @@ async function startTraining() {
     drawNetwork();
     drawErrorChart();
     predict();
-    requestAnimationFrame(step);
+    setTimeout(() => requestAnimationFrame(step), 80);  // 80ms pause between batches
   }
   step();
 }

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — How Neural Networks Learn</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --border: #1e2330;
+    --accent: #c8a96e;
+    --accent2: #6e9ec8;
+    --accent3: #c86e6e;
+    --text: #e8e4da;
+    --muted: #7a7870;
+    --green: #6ec87a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    padding: 2rem 2rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    color: var(--text);
+    font-weight: 400;
+  }
+  .back-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.7rem;
+    letter-spacing: 0.08em;
+    margin-left: auto;
+    transition: all 0.15s;
+  }
+  .back-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  .wrapper {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .section {
+    margin-bottom: 2.8rem;
+  }
+  .section-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+    display: block;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.45rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 1.1rem;
+    line-height: 1.3;
+  }
+  p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #b8b4aa;
+    margin-bottom: 1rem;
+  }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 500; }
+  em { color: var(--accent); font-style: normal; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* Concept cards */
+  .concepts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1rem 1.1rem;
+  }
+  .concept-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+  .concept-body {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  /* Highlighted note */
+  .note {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.2rem;
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .note strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>About This Demonstration</h1>
+  <a class="back-link" href="demo1_neural_network.html">← Back to demo</a>
+</header>
+
+<div class="wrapper">
+
+  <div class="section">
+    <span class="section-tag">Part 1 — Background</span>
+    <h2>What Is a Neural Network?</h2>
+    <p>
+      A neural network is a mathematical system loosely inspired by the human brain. It consists of
+      <strong>neurons</strong> — simple computational units — organised in <strong>layers</strong>.
+      The first layer receives input data; the last layer produces an output (a prediction or
+      classification); intermediate layers, called <strong>hidden layers</strong>, perform internal
+      transformations. Neurons between adjacent layers are connected by <strong>weights</strong> —
+      numerical values that determine how strongly one neuron influences the next.
+    </p>
+    <p>
+      Learning happens through a process called <strong>training</strong>. The network is shown many
+      examples with known correct answers. For each example it makes a prediction, compares it to
+      the correct answer, measures the error, and then adjusts its weights slightly to reduce that
+      error. Specifically, if increasing a weight would have made the prediction worse, that weight
+      is reduced; if increasing it would have made the prediction better, it is increased — each by
+      a small amount proportional to its contribution to the error. This adjustment propagates
+      backwards through the network — hence the term <strong>backpropagation</strong>. After
+      thousands of repetitions the weights settle into values that allow the network to make accurate
+      predictions on new, unseen data. The network does not follow explicit rules written by a
+      programmer; it discovers its own internal patterns entirely from the data it is trained on.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <span class="section-tag">Part 2 — The Demo</span>
+    <h2>What You See on the Page</h2>
+    <p>
+      The page is divided into two areas. On the <strong>left</strong> is a live visualisation of
+      the neural network itself. Circles represent neurons, arranged in four vertical columns
+      corresponding to four layers: the input layer (4 neurons), two hidden layers (6 and 4
+      neurons), and a single output neuron on the right. The lines connecting neurons represent
+      weights.
+    </p>
+    <p>
+      <strong>Before training</strong>, the lines are thin and nearly uniform — the weights are
+      random and the network knows nothing. <strong>During training</strong>, watch the lines
+      change: they grow thicker as weights strengthen, and shift in colour —
+      <em>warm golden tones</em> indicate a weight that pushes the risk score upward,
+      <strong style="color:var(--accent2)">cool blue tones</strong> indicate a weight that suppresses
+      it. The rightmost neuron gradually shifts colour from green (low risk) toward red (high risk)
+      as the network learns to discriminate.
+    </p>
+    <p>
+      On the <strong>right panel</strong> you will find three sections. The
+      <strong>Training Data</strong> table shows the ten labelled contracts the network learns from —
+      each described by four features: whether it contains a penalty clause, its duration, the number
+      of parties, and the degree of ambiguous language. Five contracts are labelled HIGH risk and
+      five LOW risk.
+    </p>
+    <p>
+      The <strong>Training</strong> section contains a button to start training and a progress bar.
+      Below the bar a small chart plots the prediction error over time — you should see it fall
+      steeply at first, then flatten as the network converges. The epoch counter shows how many
+      training iterations have completed.
+    </p>
+    <p>
+      Once training is finished, the <strong>Try It</strong> section becomes meaningful. A Yes/No
+      toggle controls the penalty clause feature; three sliders let you set contract duration,
+      number of parties, and degree of ambiguous language. The network instantly produces a risk
+      score — a percentage — and a verdict. Try toggling the penalty clause on and off, or setting
+      all sliders to maximum — the risk score should jump accordingly. You can also press Reset and
+      train again: the result will differ slightly each time, because the initial weights are chosen
+      at random.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <span class="section-tag">Part 3 — Key Concepts</span>
+    <h2>What This Illustrates</h2>
+    <div class="concepts">
+      <div class="concept-card">
+        <div class="concept-title">Weights &amp; Learning</div>
+        <div class="concept-body">The visible thickening and recolouring of connections is the actual learning process, not a metaphor for it.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Black-Box Opacity</div>
+        <div class="concept-body">The network produces a number, but there is no simple rule to read off <em style="color:var(--accent2)">why</em>. This opacity is central to AI regulation and explainability law.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Generalisation</div>
+        <div class="concept-body">Trained on ten contracts, the network scores any combination of inputs — including ones it has never seen. Whether it generalises correctly depends on the training data.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Reproducibility</div>
+        <div class="concept-body">Press Reset, then Train again. The same architecture, the same data, a different outcome — a challenge for reproducibility in legal and regulatory contexts.</div>
+      </div>
+    </div>
+    <div class="note">
+      <strong>Discussion point:</strong> This network was trained on ten hand-crafted examples. Real
+      legal AI tools are trained on millions of documents. The fundamental mechanism is identical —
+      but the opacity, the potential for bias, and the difficulty of auditing scale up with it.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — The Black Box Problem</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --border: #e0dbd0;
+    --ink: #1a1714;
+    --muted: #8a8070;
+    --accent: #b5451b;
+    --accent2: #2b5e8a;
+    --warn: #d4a020;
+    --surface2: #f2ede4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 1.4rem 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.3rem, 3.5vw, 1.9rem);
+    font-weight: 700;
+  }
+  .back-link {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: #8a8070;
+    text-decoration: none;
+    border: 1px solid #444;
+    padding: 0.2rem 0.7rem;
+    letter-spacing: 0.08em;
+    margin-left: auto;
+    transition: all 0.15s;
+  }
+  .back-link:hover { color: #b5451b; border-color: #b5451b; }
+
+  .wrapper {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  .section { margin-bottom: 2.8rem; }
+  .section-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+    display: block;
+  }
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 1.1rem;
+    line-height: 1.3;
+  }
+  p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #4a4540;
+    margin-bottom: 1rem;
+  }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--ink); font-weight: 600; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* Metric definitions */
+  .metric-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1.2rem 0;
+  }
+  @media(max-width: 500px) { .metric-cards { grid-template-columns: 1fr; } }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1rem 1.1rem;
+  }
+  .metric-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+  .metric-body {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  /* Concept cards */
+  .concepts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.1rem;
+  }
+  .concept-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+  .concept-body {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .note {
+    background: var(--surface2);
+    border-left: 3px solid var(--warn);
+    padding: 1rem 1.2rem;
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .note strong { color: var(--ink); }
+
+  .tech-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    border: 1px dashed var(--border);
+    padding: 0.6rem 0.9rem;
+    margin-top: 2rem;
+    line-height: 1.7;
+  }
+  .tech-note a { color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>About This Demonstration</h1>
+  <a class="back-link" href="demo2_black_box.html">← Back to demo</a>
+</header>
+
+<div class="wrapper">
+
+  <div class="section">
+    <span class="section-tag">Part 1 — Background</span>
+    <h2>The Black Box Problem</h2>
+    <p>
+      When an AI system reaches a conclusion, it does so through millions of internal numerical
+      operations that no human directly controls or reads. The system was not programmed with
+      rules like "if penalty clause and long duration, then high risk" — it inferred its own
+      internal logic from training examples. This makes it a <strong>black box</strong>: inputs
+      go in, outputs come out, but the reasoning in between is opaque.
+    </p>
+    <p>
+      One important consequence of this opacity is <strong>sensitivity to phrasing</strong>. Unlike
+      a human lawyer who understands that "breach," "violate," and "fail to perform" are legally
+      equivalent, an AI system processes language statistically. Slight changes in wording shift
+      the statistical patterns the system recognises, and can therefore shift the output — sometimes
+      dramatically — even when the underlying facts are identical.
+    </p>
+    <p>
+      This has direct legal implications. If an AI tool is used for contract review, risk
+      assessment, sentencing recommendations, or evidence analysis, the party who controls how
+      facts are described to the system has significant influence over the output. The system
+      itself provides no warning that this has happened.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <span class="section-tag">Part 2 — The Demo</span>
+    <h2>What You See on the Page</h2>
+    <p>
+      The page presents four pre-built scenarios, each covering a different area of law: contract
+      breach, tort liability, criminal intent, and employment discrimination. Each scenario
+      consists of two prompts — <strong>Prompt A</strong> and <strong>Prompt B</strong> — that
+      describe the same underlying facts using different language or emphasis. When you select a
+      scenario, both prompts are sent simultaneously to a real AI (Claude), and the two responses
+      appear side by side.
+    </p>
+    <p>
+      Below each response you will see two measured scores. These are not calculated by a separate
+      system — they are values the AI itself reports when asked to self-assess its response in a
+      structured format:
+    </p>
+
+    <div class="metric-cards">
+      <div class="metric-card">
+        <div class="metric-name">Confidence</div>
+        <div class="metric-body">How certain the AI says it is in its assessment, on a scale of 0–100. A score of 85 means the AI considers the answer fairly clear-cut; a score of 40 means it sees the question as genuinely ambiguous.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Risk Signal</div>
+        <div class="metric-body">How strongly the AI's response points toward legal risk, liability, or an adverse finding, on a scale of 0–100. A high score means the AI leaned toward finding a problem; a low score means it leaned toward finding none.</div>
+      </div>
+    </div>
+
+    <p>
+      Below the two response cards, an <strong>Output Divergence</strong> meter shows the average
+      gap between the two scores. A high divergence on semantically equivalent prompts is the
+      central demonstration: the same AI, the same facts, a different answer.
+    </p>
+    <p>
+      At the bottom of the page you can enter your own prompt pair and run the comparison live.
+      Try rephrasing the same legal question from a plaintiff's perspective and then a defendant's
+      perspective, and observe the effect.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <span class="section-tag">Part 3 — Key Concepts</span>
+    <h2>What This Illustrates</h2>
+    <div class="concepts">
+      <div class="concept-card">
+        <div class="concept-title">Input Sensitivity</div>
+        <div class="concept-body">AI outputs are a function of exact input tokens, not underlying meaning. Small lexical changes can cross decision boundaries inside the model.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Framing Effects</div>
+        <div class="concept-body">Whoever drafts the prompt to an AI system exercises significant influence over its output — without the system disclosing that influence.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Auditability</div>
+        <div class="concept-body">If the same tool gives different answers to equivalent questions, how should a court assess its reliability? Current evidentiary standards were not designed for this.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Consistency</div>
+        <div class="concept-body">Human legal standards require consistent application of rules. AI systems have no built-in guarantee of consistency across paraphrased inputs.</div>
+      </div>
+    </div>
+    <div class="note">
+      <strong>Discussion point:</strong> If an AI risk-assessment tool is admitted as evidence,
+      should the opposing party be entitled to test it with alternative phrasings of the same
+      facts? What standard of adversarial testing should be required before AI output is treated
+      as reliable?
+    </div>
+  </div>
+
+  <div class="tech-note">
+    Powered by <strong>Claude</strong> (Anthropic) via <a href="https://puter.com" target="_blank">Puter.js</a> —
+    a free, open platform that provides AI API access without requiring an API key.
+    Each user authenticates with their own free Puter account; no data is stored by this application.
+  </div>
+
+</div>
+</body>
+</html>

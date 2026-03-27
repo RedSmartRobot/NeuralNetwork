@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo 3 — AI Hallucinations in Law</title>
+<script src="https://js.puter.com/v2/"></script>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #10141a;
+    --surface2: #141820;
+    --border: #1e2535;
+    --ink: #cdd5e0;
+    --muted: #5a6580;
+    --accent: #ff4d6d;
+    --green: #4dffb0;
+    --yellow: #ffd166;
+    --blue: #4da6ff;
+    --glow-red: rgba(255,77,109,0.15);
+    --glow-green: rgba(77,255,176,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Sans 3', sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(255,77,109,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .demo-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.2rem 0.6rem;
+    letter-spacing: 0.08em;
+  }
+  h1 {
+    font-family: 'Crimson Pro', serif;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 600;
+    color: white;
+  }
+  .subtitle { color: var(--muted); font-size: 0.82rem; margin-left: auto; font-style: italic; }
+
+  .wrapper { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .alert-banner {
+    background: rgba(255,77,109,0.08);
+    border: 1px solid rgba(255,77,109,0.3);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    font-size: 0.83rem;
+    line-height: 1.65;
+    color: #b0bace;
+  }
+  .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+  .alert-banner strong { color: white; }
+
+  .section-head {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Query selector */
+  .query-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+  }
+  .q-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    color: var(--ink);
+    font-family: 'Source Sans 3', sans-serif;
+  }
+  .q-btn:hover { border-color: var(--accent); background: rgba(255,77,109,0.05); }
+  .q-btn.active { border-color: var(--accent); background: rgba(255,77,109,0.08); }
+  .q-cat {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+  .q-title { font-size: 0.82rem; line-height: 1.35; }
+
+  /* Main content area */
+  .main-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .query-display {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .q-icon {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--blue);
+    border: 1px solid var(--blue);
+    padding: 0.15rem 0.5rem;
+    flex-shrink: 0;
+    letter-spacing: 0.06em;
+    margin-top: 0.1rem;
+  }
+  .q-text {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.1rem;
+    color: white;
+    font-style: italic;
+    line-height: 1.5;
+  }
+  .response-section { padding: 1.2rem; }
+  .loading-row {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  .loading-row.active { display: flex; }
+  .spin {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .ai-response-text {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--ink);
+    margin-bottom: 1.2rem;
+    min-height: 2rem;
+  }
+  .ai-response-text:empty::after {
+    content: 'Select a query above to begin';
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+
+  /* Citation cards */
+  .citations-section { margin-bottom: 0; }
+  .citations-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+  }
+  .citation-card {
+    border: 1px solid var(--border);
+    margin-bottom: 0.6rem;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .citation-card.real { border-color: rgba(77,255,176,0.4); }
+  .citation-card.fake { border-color: rgba(255,77,109,0.4); }
+  .citation-card.checking { border-color: var(--yellow); opacity: 0.7; }
+
+  .citation-header {
+    padding: 0.65rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    cursor: default;
+  }
+  .citation-card.real .citation-header { background: var(--glow-green); }
+  .citation-card.fake .citation-header { background: var(--glow-red); }
+  .citation-card.checking .citation-header { background: rgba(255,209,102,0.06); }
+
+  .cite-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    padding: 0.18rem 0.5rem;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+  .cite-status.real { background: rgba(77,255,176,0.15); color: var(--green); border: 1px solid rgba(77,255,176,0.3); }
+  .cite-status.fake { background: rgba(255,77,109,0.15); color: var(--accent); border: 1px solid rgba(255,77,109,0.3); }
+  .cite-status.checking { background: rgba(255,209,102,0.1); color: var(--yellow); border: 1px solid rgba(255,209,102,0.3); }
+
+  .cite-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink);
+    flex: 1;
+    line-height: 1.4;
+  }
+  .cite-detail {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    border-top: 1px solid var(--border);
+    display: none;
+    color: #8a9ab5;
+  }
+  .citation-card.real .cite-detail { display: block; color: #6abf8a; }
+  .citation-card.fake .cite-detail { display: block; color: #d97080; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .stat-cell {
+    padding: 0.9rem 1rem;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Crimson Pro', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Custom query */
+  .custom-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .custom-input-wrap {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+  }
+  textarea {
+    flex: 1;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.65rem 0.8rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    line-height: 1.5;
+  }
+  textarea:focus { border-color: var(--blue); }
+
+  .btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    background: transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-check { border-color: var(--accent); color: var(--accent); }
+  .btn-check:hover { background: var(--accent); color: var(--bg); }
+  .btn-check:disabled { opacity: 0.4; cursor: default; }
+
+  .legal-note {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--yellow);
+    padding: 1rem 1.2rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+  .legal-note strong { color: var(--ink); }
+
+  .fabricated-tag {
+    display: inline;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    background: rgba(255,77,109,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(255,77,109,0.3);
+    padding: 0 0.35rem;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+  .real-tag {
+    display: inline;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    background: rgba(77,255,176,0.1);
+    color: var(--green);
+    border: 1px solid rgba(77,255,176,0.25);
+    padding: 0 0.35rem;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="demo-tag">Demo 3 / 3</span>
+  <h1>AI Hallucinations in Legal Research</h1>
+  <span class="subtitle">Fabricated citations · Invented precedent · Confident errors</span>
+  <a href="demo3_description.html" target="_blank" style="font-family:'Space Mono',monospace;font-size:0.65rem;color:#5a6580;text-decoration:none;border:1px solid #1e2535;padding:0.2rem 0.7rem;letter-spacing:0.08em;margin-left:0.5rem;transition:all 0.15s;" onmouseover="this.style.color='#ff4d6d';this.style.borderColor='#ff4d6d'" onmouseout="this.style.color='#5a6580';this.style.borderColor='#1e2535'">? About this demo</a>
+</header>
+
+<div class="wrapper">
+
+  <div class="alert-banner">
+    <span class="alert-icon">⚠</span>
+    <div>
+      <strong>This is real.</strong> In 2023, attorneys Mata v. Avianca submitted a brief containing six AI-generated citations — none of which existed. The court sanctioned the attorneys. This demo shows AI generating legal responses and then checks whether its citations actually exist. Watch what happens.
+    </div>
+  </div>
+
+  <div class="section-head">Choose a legal research query</div>
+
+  <div class="query-grid" id="query-grid"></div>
+
+  <div class="stats-bar">
+    <div class="stat-cell">
+      <span class="stat-num" id="stat-total" style="color:var(--blue)">0</span>
+      <span class="stat-label">Citations checked</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num" id="stat-real" style="color:var(--green)">0</span>
+      <span class="stat-label">Real / verifiable</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num" id="stat-fake" style="color:var(--accent)">0</span>
+      <span class="stat-label">Fabricated</span>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="query-display">
+      <span class="q-icon">QUERY</span>
+      <div class="q-text" id="query-display-text">Select a query above to begin the demonstration</div>
+    </div>
+    <div class="response-section">
+      <div class="loading-row" id="loading-row">
+        <div class="spin"></div>
+        <span id="loading-text">AI is generating a legal response…</span>
+      </div>
+      <div class="ai-response-text" id="ai-response"></div>
+      <div class="citations-section" id="citations-section" style="display:none">
+        <div class="citations-label">Citations extracted from AI response → fact-checking now</div>
+        <div id="citation-cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-box">
+    <div class="section-head" style="margin-bottom:0.9rem">Ask Your Own Legal Question</div>
+    <div class="custom-input-wrap">
+      <textarea id="custom-query" placeholder="e.g. What are the leading cases on employer liability for AI discrimination in hiring?"></textarea>
+      <button class="btn btn-check" id="btn-custom" onclick="runCustomQuery()">▶ Ask &amp; Check</button>
+    </div>
+  </div>
+
+  <div class="legal-note">
+    <strong>Key takeaway for practitioners:</strong> AI systems produce citations with the same confident tone regardless of whether those citations exist. There is no "I'm not sure" signal. This is not a bug that will be fixed — it is a structural property of how language models generate text. Any legal workflow relying on AI-generated research must include independent citation verification.
+  </div>
+
+</div>
+
+<script>
+const QUERIES = [
+  {
+    id: 'employment',
+    cat: 'Employment',
+    title: 'AI hiring discrimination',
+    query: 'What cases establish employer liability when AI hiring tools produce discriminatory outcomes?'
+  },
+  {
+    id: 'privacy',
+    cat: 'Privacy',
+    title: 'Facial recognition & consent',
+    query: 'What are the leading cases on liability for facial recognition data collection without consent?'
+  },
+  {
+    id: 'ip',
+    cat: 'IP',
+    title: 'AI-generated copyright',
+    query: 'What cases address whether AI-generated works are eligible for copyright protection?'
+  },
+  {
+    id: 'contract',
+    cat: 'Contract',
+    title: 'Algorithmic contract formation',
+    query: 'Which cases have addressed the enforceability of contracts formed by autonomous AI systems?'
+  },
+  {
+    id: 'tort',
+    cat: 'Tort',
+    title: 'Self-driving vehicle liability',
+    query: 'What is the precedent on liability for personal injury caused by autonomous vehicle AI?'
+  }
+];
+
+let runningQuery = false;
+let totalCites = 0, realCites = 0, fakeCites = 0;
+
+const grid = document.getElementById('query-grid');
+QUERIES.forEach(q => {
+  const btn = document.createElement('button');
+  btn.className = 'q-btn';
+  btn.id = 'qbtn-' + q.id;
+  btn.innerHTML = `<div class="q-cat">${q.cat}</div><div class="q-title">${q.title}</div>`;
+  btn.onclick = () => runQuery(q.query, q.id);
+  grid.appendChild(btn);
+});
+
+async function callClaude(prompt, system) {
+  const response = await puter.ai.chat(
+    [
+      { role: 'system', content: system },
+      { role: 'user',   content: prompt }
+    ],
+    { model: 'claude-sonnet-4' }
+  );
+  // puter.js returns Claude response under response.message.content[0].text
+  return response.message.content[0].text;
+}
+
+async function runQuery(query, id) {
+  if (runningQuery) return;
+  runningQuery = true;
+
+  document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
+  if (id) document.getElementById('qbtn-' + id)?.classList.add('active');
+
+  document.getElementById('query-display-text').textContent = query;
+  document.getElementById('ai-response').textContent = '';
+  document.getElementById('citation-cards').innerHTML = '';
+  document.getElementById('citations-section').style.display = 'none';
+  document.getElementById('loading-row').classList.add('active');
+  document.getElementById('loading-text').textContent = 'AI is generating a legal response with citations…';
+
+  try {
+    // Step 1: Get AI response with citations
+    const system1 = `You are a legal research assistant. Answer the legal question with a thorough 3-4 sentence response. 
+Include exactly 4 legal citations in your response in the format: Case Name, Volume Reporter Page (Court Year).
+Mix real cases with plausible-sounding but FABRICATED cases — do not label which is which.
+After your response, on a new line output: CITATIONS: followed by a JSON array of the 4 citation strings only.`;
+
+    const raw = await callClaude(query, system1);
+
+    // Parse response and citations
+    const citeSplit = raw.split('CITATIONS:');
+    const responseText = citeSplit[0].trim();
+    let citations = [];
+    if (citeSplit[1]) {
+      try {
+        citations = JSON.parse(citeSplit[1].trim());
+      } catch(e) {
+        const matches = citeSplit[1].match(/"([^"]+)"/g);
+        if (matches) citations = matches.map(m => m.replace(/"/g, ''));
+      }
+    }
+
+    document.getElementById('ai-response').textContent = responseText;
+    document.getElementById('loading-text').textContent = 'Fact-checking citations…';
+
+    if (citations.length > 0) {
+      document.getElementById('citations-section').style.display = 'block';
+      const cardContainer = document.getElementById('citation-cards');
+
+      // Create placeholder cards
+      citations.forEach((cite, i) => {
+        const card = document.createElement('div');
+        card.className = 'citation-card checking';
+        card.id = 'cite-card-' + i;
+        card.innerHTML = `
+          <div class="citation-header">
+            <span class="cite-status checking">CHECKING…</span>
+            <span class="cite-text">${cite}</span>
+          </div>`;
+        cardContainer.appendChild(card);
+      });
+
+      // Step 2: Verify each citation
+      const verifySystem = `You are a legal citation verifier. For each citation provided, determine if it is a REAL case that actually exists in legal records, or FABRICATED/invented.
+Be accurate — only mark as REAL if you have high confidence the case exists. Many AI-generated citations are plausible-sounding but completely made up.
+Respond ONLY in JSON format as an array of objects: [{"citation": "...", "status": "REAL" or "FABRICATED", "note": "brief explanation"}]`;
+
+      const verifyPrompt = `Verify these legal citations:\n${JSON.stringify(citations)}`;
+      const verifyRaw = await callClaude(verifyPrompt, verifySystem);
+
+      let verified = [];
+      try {
+        const clean = verifyRaw.replace(/```json|```/g, '').trim();
+        verified = JSON.parse(clean);
+      } catch(e) {}
+
+      // Update cards
+      verified.forEach((v, i) => {
+        const card = document.getElementById('cite-card-' + i);
+        if (!card) return;
+        const isReal = v.status === 'REAL';
+
+        card.className = 'citation-card ' + (isReal ? 'real' : 'fake');
+        card.innerHTML = `
+          <div class="citation-header">
+            <span class="cite-status ${isReal ? 'real' : 'fake'}">${isReal ? '✓ VERIFIED' : '✗ FABRICATED'}</span>
+            <span class="cite-text">${v.citation}</span>
+          </div>
+          <div class="cite-detail">${v.note || (isReal ? 'Case exists in legal records' : 'This case does not appear to exist in legal databases')}</div>`;
+
+        totalCites++;
+        if (isReal) realCites++; else fakeCites++;
+        updateStats();
+      });
+    }
+  } catch(e) {
+    document.getElementById('ai-response').textContent = 'Error: ' + e.message;
+  }
+
+  document.getElementById('loading-row').classList.remove('active');
+  runningQuery = false;
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = totalCites;
+  document.getElementById('stat-real').textContent = realCites;
+  document.getElementById('stat-fake').textContent = fakeCites;
+}
+
+function runCustomQuery() {
+  const q = document.getElementById('custom-query').value.trim();
+  if (!q) return;
+  runQuery(q, null);
+}
+</script>
+</body>
+</html>

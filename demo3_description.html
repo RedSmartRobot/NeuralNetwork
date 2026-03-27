@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — AI Hallucinations in Legal Research</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #10141a;
+    --surface2: #141820;
+    --border: #1e2535;
+    --ink: #cdd5e0;
+    --muted: #5a6580;
+    --accent: #ff4d6d;
+    --green: #4dffb0;
+    --yellow: #ffd166;
+    --blue: #4da6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Sans 3', sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-family: 'Crimson Pro', serif;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 600;
+    color: white;
+  }
+  .back-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.7rem;
+    letter-spacing: 0.08em;
+    margin-left: auto;
+    transition: all 0.15s;
+  }
+  .back-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  .wrapper {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  .section { margin-bottom: 2.8rem; }
+  .section-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+    display: block;
+  }
+  h2 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 1.1rem;
+    line-height: 1.3;
+  }
+  p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #8a9ab5;
+    margin-bottom: 1rem;
+  }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--ink); font-weight: 600; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* Status legend */
+  .status-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1.2rem 0;
+  }
+  @media(max-width: 500px) { .status-legend { grid-template-columns: 1fr; } }
+  .status-card {
+    border: 1px solid var(--border);
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .status-card.real { border-color: rgba(77,255,176,0.35); background: rgba(77,255,176,0.04); }
+  .status-card.fake { border-color: rgba(255,77,109,0.35); background: rgba(255,77,109,0.04); }
+  .status-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.18rem 0.5rem;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .status-badge.real { background: rgba(77,255,176,0.15); color: var(--green); border: 1px solid rgba(77,255,176,0.3); }
+  .status-badge.fake { background: rgba(255,77,109,0.15); color: var(--accent); border: 1px solid rgba(255,77,109,0.3); }
+  .status-text { font-size: 0.82rem; line-height: 1.6; color: var(--muted); }
+
+  /* Concept cards */
+  .concepts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.1rem;
+  }
+  .concept-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+  .concept-body { font-size: 0.82rem; line-height: 1.6; color: var(--muted); }
+
+  .note {
+    background: var(--surface);
+    border-left: 3px solid var(--yellow);
+    padding: 1rem 1.2rem;
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .note strong { color: var(--ink); }
+
+  .real-case-box {
+    background: rgba(255,77,109,0.06);
+    border: 1px solid rgba(255,77,109,0.25);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .real-case-box strong { color: white; }
+
+  .tech-note {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    border: 1px dashed var(--border);
+    padding: 0.6rem 0.9rem;
+    margin-top: 2rem;
+    line-height: 1.8;
+  }
+  .tech-note a { color: var(--blue); text-decoration: none; }
+  .tech-note a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>About This Demonstration</h1>
+  <a class="back-link" href="demo3_hallucination.html">← Back to demo</a>
+</header>
+
+<div class="wrapper">
+
+  <div class="section">
+    <span class="section-tag">Part 1 — Background</span>
+    <h2>AI Hallucinations in Legal Research</h2>
+    <p>
+      Large language models generate text by predicting, word by word, what a plausible continuation
+      of a given prompt would look like. They do not look things up in a database, and they do not
+      know what they do not know. When asked a question whose answer lies outside their training
+      data — or simply at the edge of it — they continue generating text anyway, producing
+      <strong>plausible-sounding but factually false</strong> content. This phenomenon is called
+      <strong>hallucination</strong>.
+    </p>
+    <p>
+      Legal citations are a particularly dangerous area for hallucination. A well-formed citation
+      — <em>Smith v. Jones, 412 F.3d 88 (2d Cir. 2005)</em> — follows a predictable grammatical
+      pattern. A language model can produce thousands of syntactically correct citations that
+      refer to cases that have never existed. The model has no internal mechanism to distinguish
+      "I know this case exists" from "this is what a citation looks like."
+    </p>
+
+    <div class="real-case-box">
+      <strong>This is not hypothetical.</strong> In 2023, New York attorneys Roberto Mata and
+      Steven Schwartz submitted a legal brief in <em>Mata v. Avianca</em> containing six
+      AI-generated case citations. None of the cases existed. When the court asked for copies,
+      the attorneys produced fabricated decisions. Judge P. Kevin Castel sanctioned both attorneys
+      and the law firm, noting that the citations had been "gibberish" and that counsel had
+      abandoned their professional obligations by submitting AI output without verification.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <span class="section-tag">Part 2 — The Demo</span>
+    <h2>What You See on the Page</h2>
+    <p>
+      Select one of the five pre-built legal research queries, or type your own at the bottom.
+      The application makes two sequential AI calls:
+    </p>
+    <p>
+      <strong>Step 1 — Generate.</strong> The AI is asked to answer the legal question with a
+      short paragraph and exactly four case citations. Critically, it is instructed to mix real
+      and fabricated citations without labelling which is which — mimicking exactly what happens
+      when a lawyer uses an AI research tool without adequate instructions.
+    </p>
+    <p>
+      <strong>Step 2 — Verify.</strong> A second AI call takes the four citations and checks
+      whether each one actually exists. Each citation card then flips from "CHECKING…" to one
+      of two states:
+    </p>
+    <div class="status-legend">
+      <div class="status-card real">
+        <span class="status-badge real">✓ VERIFIED</span>
+        <span class="status-text">The AI has reasonable confidence this case exists in legal records and the citation details are plausible.</span>
+      </div>
+      <div class="status-card fake">
+        <span class="status-badge fake">✗ FABRICATED</span>
+        <span class="status-text">The citation does not appear to correspond to any real case. The name, reporter, or court details were invented.</span>
+      </div>
+    </div>
+    <p>
+      The running totals at the top of the page track how many citations have been checked across
+      all queries in your session, and what proportion were fabricated. Run several queries to
+      build up a meaningful sample.
+    </p>
+    <p>
+      <strong>Important note on the verification step:</strong> the second AI call is itself
+      subject to the same limitations. It may occasionally mark a real case as fabricated, or
+      vice versa. This is intentional — it reinforces the point that you cannot reliably use AI
+      to fact-check AI. Independent verification against an authoritative legal database
+      (Westlaw, LexisNexis) remains essential.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <span class="section-tag">Part 3 — Key Concepts</span>
+    <h2>What This Illustrates</h2>
+    <div class="concepts">
+      <div class="concept-card">
+        <div class="concept-title">Hallucination</div>
+        <div class="concept-body">AI generates fluent, confident text regardless of factual accuracy. There is no "I'm not sure" signal — false and true citations look identical.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Professional Duty</div>
+        <div class="concept-body">Counsel has an independent duty to verify any citation submitted to a court. Delegating research to AI does not discharge that duty.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Confidence ≠ Accuracy</div>
+        <div class="concept-body">The authoritative tone of AI output is a property of the generation process, not evidence of correctness. Hedged language and false confidence look the same.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-title">Verification Gap</div>
+        <div class="concept-body">AI cannot reliably verify its own output. External, authoritative sources remain the only trustworthy check on AI-generated legal research.</div>
+      </div>
+    </div>
+    <div class="note">
+      <strong>Discussion point:</strong> Several bar associations have now issued guidance requiring
+      attorneys to verify AI-generated citations. Should verification be a formal procedural
+      requirement — analogous to signing a pleading — before AI-assisted research can be filed
+      with a court? Who bears liability if a fabricated citation goes undetected?
+    </div>
+  </div>
+
+  <div class="tech-note">
+    Powered by <strong>Claude</strong> (Anthropic) via <a href="https://puter.com" target="_blank">Puter.js</a> —
+    a free, open platform that provides AI API access without requiring an API key.
+    Each user authenticates with their own free Puter account; no data is stored by this application.
+  </div>
+
+</div>
+</body>
+</html>
